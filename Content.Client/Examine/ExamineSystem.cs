@@ -14,9 +14,14 @@ using Robust.Shared.Input.Binding;
 using Robust.Shared.Map;
 using Robust.Shared.Utility;
 using System.Linq;
+using System.Numerics;
 using System.Threading;
+using Content.Shared.Eye.Blinding.Components;
+using Robust.Client;
 using static Content.Shared.Interaction.SharedInteractionSystem;
 using static Robust.Client.UserInterface.Controls.BoxContainer;
+using Content.Shared.Interaction.Events;
+using Content.Shared.Item;
 
 namespace Content.Client.Examine
 {
@@ -27,6 +32,7 @@ namespace Content.Client.Examine
         [Dependency] private readonly IPlayerManager _playerManager = default!;
         [Dependency] private readonly IEyeManager _eyeManager = default!;
         [Dependency] private readonly VerbSystem _verbSystem = default!;
+        [Dependency] private readonly IBaseClient _client = default!;
 
         public const string StyleClassEntityTooltip = "entity-tooltip";
 
@@ -46,11 +52,26 @@ namespace Content.Client.Examine
 
             SubscribeNetworkEvent<ExamineSystemMessages.ExamineInfoResponseMessage>(OnExamineInfoResponse);
 
+            SubscribeLocalEvent<ItemComponent, DroppedEvent>(OnExaminedItemDropped);
+
             CommandBinds.Builder
                 .Bind(ContentKeyFunctions.ExamineEntity, new PointerInputCmdHandler(HandleExamine, outsidePrediction: true))
                 .Register<ExamineSystem>();
 
             _idCounter = 0;
+        }
+
+        private void OnExaminedItemDropped(EntityUid item, ItemComponent comp, DroppedEvent args)
+        {
+            if (!args.User.Valid)
+                return;
+            if (_playerManager.LocalPlayer == null)
+                return;
+            if (_examineTooltipOpen == null)
+                return;
+
+            if (item == _examinedEntity && args.User == _playerManager.LocalPlayer.ControlledEntity)
+                CloseTooltip();
         }
 
         public override void Update(float frameTime)
@@ -201,13 +222,16 @@ namespace Content.Client.Examine
 
             vBox.AddChild(hBox);
 
-            if (EntityManager.TryGetComponent(target, out SpriteComponent? sprite))
+            if (EntityManager.HasComponent<SpriteComponent>(target))
             {
-                hBox.AddChild(new SpriteView
+                var spriteView = new SpriteView
                 {
-                    Sprite = sprite, OverrideDirection = Direction.South,
+                    OverrideDirection = Direction.South,
+                    SetSize = new Vector2(32, 32),
                     Margin = new Thickness(2, 0, 2, 0),
-                });
+                };
+                spriteView.SetEntity(target);
+                hBox.AddChild(spriteView);
             }
 
             if (knowTarget)
@@ -227,8 +251,8 @@ namespace Content.Client.Examine
                 });
             }
 
-            panel.Measure(Vector2.Infinity);
-            var size = Vector2.ComponentMax((minWidth, 0), panel.DesiredSize);
+            panel.Measure(Vector2Helpers.Infinity);
+            var size = Vector2.Max(new Vector2(minWidth, 0), panel.DesiredSize);
 
             _examineTooltipOpen.Open(UIBox2.FromDimensions(_popupPos.Position, size));
         }
@@ -325,9 +349,9 @@ namespace Content.Client.Examine
             }
         }
 
-        public void DoExamine(EntityUid entity, bool centeredOnCursor=true)
+        public void DoExamine(EntityUid entity, bool centeredOnCursor = true, EntityUid? userOverride = null)
         {
-            var playerEnt = _playerManager.LocalPlayer?.ControlledEntity;
+            var playerEnt = userOverride ?? _playerManager.LocalPlayer?.ControlledEntity;
             if (playerEnt == null)
                 return;
 
@@ -339,10 +363,10 @@ namespace Content.Client.Examine
                 canSeeClearly = false;
 
             OpenTooltip(playerEnt.Value, entity, centeredOnCursor, false, knowTarget: canSeeClearly);
-            if (entity.IsClientSide())
+            if (entity.IsClientSide()
+                || _client.RunLevel == ClientRunLevel.SinglePlayerGame) // i.e. a replay
             {
                 message = GetExamineText(entity, playerEnt);
-
                 UpdateTooltipInfo(playerEnt.Value, entity, message);
             }
             else
@@ -354,6 +378,9 @@ namespace Content.Client.Examine
                     _idCounter = 0;
                 RaiseNetworkEvent(new ExamineSystemMessages.RequestExamineInfoMessage(entity, _idCounter, true));
             }
+
+            RaiseLocalEvent(entity, new ClientExaminedEvent(entity, playerEnt.Value));
+
             _lastExaminedEntity = entity;
         }
 
@@ -377,6 +404,28 @@ namespace Content.Client.Examine
                 _requestCancelTokenSource.Cancel();
                 _requestCancelTokenSource = null;
             }
+        }
+    }
+
+    /// <summary>
+    /// An entity was examined on the client.
+    /// </summary>
+    public sealed class ClientExaminedEvent : EntityEventArgs
+    {
+        /// <summary>
+        ///     The entity performing the examining.
+        /// </summary>
+        public readonly EntityUid Examiner;
+
+        /// <summary>
+        ///     Entity being examined, for broadcast event purposes.
+        /// </summary>
+        public readonly EntityUid Examined;
+
+        public ClientExaminedEvent(EntityUid examined, EntityUid examiner)
+        {
+            Examined = examined;
+            Examiner = examiner;
         }
     }
 }

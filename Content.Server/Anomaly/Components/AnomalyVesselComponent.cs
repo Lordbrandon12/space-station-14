@@ -13,7 +13,7 @@ namespace Content.Server.Anomaly.Components;
 /// the anomaly's stability and severity.
 /// </summary>
 [RegisterComponent, Access(typeof(SharedAnomalySystem))]
-public sealed class AnomalyVesselComponent : Component
+public sealed partial class AnomalyVesselComponent : Component
 {
     /// <summary>
     /// The anomaly that the vessel is storing.
@@ -32,7 +32,7 @@ public sealed class AnomalyVesselComponent : Component
     /// The machine part that affects the point multiplier of the vessel
     /// </summary>
     [DataField("machinePartPointModifier", customTypeSerializer: typeof(PrototypeIdSerializer<MachinePartPrototype>))]
-    public string MachinePartPointModifier = "ScanningModule";
+    public string MachinePartPointModifier = "Capacitor";
 
     /// <summary>
     /// A value used to scale the point multiplier

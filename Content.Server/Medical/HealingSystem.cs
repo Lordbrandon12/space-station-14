@@ -30,7 +30,6 @@ public sealed class HealingSystem : EntitySystem
     [Dependency] private readonly IRobustRandom _random = default!;
     [Dependency] private readonly StackSystem _stacks = default!;
     [Dependency] private readonly SharedInteractionSystem _interactionSystem = default!;
-    [Dependency] private readonly MobStateSystem _mobStateSystem = default!;
     [Dependency] private readonly MobThresholdSystem _mobThresholdSystem = default!;
     [Dependency] private readonly PopupSystem _popupSystem = default!;
 
@@ -49,11 +48,15 @@ public sealed class HealingSystem : EntitySystem
         if (!TryComp(args.Used, out HealingComponent? healing))
             return;
 
-        if (args.Handled || args.Cancelled || _mobStateSystem.IsDead(uid))
+        if (args.Handled || args.Cancelled)
             return;
 
-        if (component.DamageContainerID is not null && !component.DamageContainerID.Equals(component.DamageContainerID))
+        if (healing.DamageContainers is not null &&
+            component.DamageContainerID is not null &&
+            !healing.DamageContainers.Contains(component.DamageContainerID))
+        {
             return;
+        }
 
         // Heal some bloodloss damage.
         if (healing.BloodlossModifier != 0)
@@ -65,7 +68,7 @@ public sealed class HealingSystem : EntitySystem
             if (isBleeding != bloodstream.BleedAmount > 0)
             {
                 dontRepeat = true;
-                _popupSystem.PopupEntity(Loc.GetString("medical-item-stop-bleeding"), uid);
+                _popupSystem.PopupEntity(Loc.GetString("medical-item-stop-bleeding"), uid, args.User);
             }
         }
 
@@ -81,7 +84,18 @@ public sealed class HealingSystem : EntitySystem
         var total = healed?.Total ?? FixedPoint2.Zero;
 
         // Re-verify that we can heal the damage.
-        _stacks.Use(args.Used.Value, 1);
+
+        if (TryComp<StackComponent>(args.Used.Value, out var stackComp))
+        {
+            _stacks.Use(args.Used.Value, 1, stackComp);
+
+            if (_stacks.GetCount(args.Used.Value, stackComp) <= 0)
+                dontRepeat = true;
+        }
+        else
+        {
+            QueueDel(args.Used.Value);
+        }
 
         if (uid != args.User)
         {
@@ -99,7 +113,7 @@ public sealed class HealingSystem : EntitySystem
         // Logic to determine the whether or not to repeat the healing action
         args.Repeat = (HasDamage(component, healing) && !dontRepeat);
         if (!args.Repeat && !dontRepeat)
-            _popupSystem.PopupEntity(Loc.GetString("medical-item-finished-using", ("item", args.Used)), uid);
+            _popupSystem.PopupEntity(Loc.GetString("medical-item-finished-using", ("item", args.Used)), uid, args.User);
         args.Handled = true;
     }
 
@@ -138,30 +152,33 @@ public sealed class HealingSystem : EntitySystem
 
     private bool TryHeal(EntityUid uid, EntityUid user, EntityUid target, HealingComponent component)
     {
-        if (_mobStateSystem.IsDead(target) || !TryComp<DamageableComponent>(target, out var targetDamage))
+        if (!TryComp<DamageableComponent>(target, out var targetDamage))
             return false;
 
-        if (component.DamageContainerID is not null &&
-            !component.DamageContainerID.Equals(targetDamage.DamageContainerID))
+        if (component.DamageContainers is not null &&
+            targetDamage.DamageContainerID is not null &&
+            !component.DamageContainers.Contains(targetDamage.DamageContainerID))
+        {
             return false;
+        }
 
         if (user != target && !_interactionSystem.InRangeUnobstructed(user, target, popup: true))
             return false;
 
-        if (!TryComp<StackComponent>(uid, out var stack) || stack.Count < 1)
+        if (TryComp<StackComponent>(uid, out var stack) && stack.Count < 1)
             return false;
 
-        if (!HasDamage(targetDamage, component))
+        if (!TryComp<BloodstreamComponent>(target, out var bloodstream))
+            return false;
+
+        if (!HasDamage(targetDamage, component) && !(bloodstream.BloodSolution.Volume < bloodstream.BloodSolution.MaxVolume && component.ModifyBloodLevel > 0))
         {
-            _popupSystem.PopupEntity(Loc.GetString("medical-item-cant-use", ("item", uid)), uid);
+            _popupSystem.PopupEntity(Loc.GetString("medical-item-cant-use", ("item", uid)), uid, user);
             return false;
         }
 
-        if (component.HealingBeginSound != null)
-        {
-            _audio.PlayPvs(component.HealingBeginSound, uid,
+        _audio.PlayPvs(component.HealingBeginSound, uid,
                 AudioHelpers.WithVariation(0.125f, _random).WithVolume(-5f));
-        }
 
         var isNotSelf = user != target;
 

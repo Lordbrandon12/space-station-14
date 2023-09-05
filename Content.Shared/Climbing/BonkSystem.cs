@@ -7,12 +7,13 @@ using Content.Shared.DragDrop;
 using Robust.Shared.Configuration;
 using Content.Shared.Popups;
 using Content.Shared.IdentityManagement;
+using Content.Shared.Interaction.Components;
 using Robust.Shared.Player;
 using Robust.Shared.Serialization;
 
 namespace Content.Shared.Climbing;
 
-public sealed class BonkSystem : EntitySystem
+public sealed partial class BonkSystem : EntitySystem
 {
     [Dependency] private readonly IConfigurationManager _cfg = default!;
     [Dependency] private readonly DamageableSystem _damageableSystem = default!;
@@ -72,7 +73,7 @@ public sealed class BonkSystem : EntitySystem
 
     private void OnDragDrop(EntityUid uid, BonkableComponent component, ref DragDropTargetEvent args)
     {
-        if (args.Handled)
+        if (args.Handled || !HasComp<ClumsyComponent>(args.Dragged))
             return;
 
         var doAfterArgs = new DoAfterArgs(args.Dragged, component.BonkDelay, new BonkDoAfterEvent(), uid, target: uid)
@@ -88,7 +89,7 @@ public sealed class BonkSystem : EntitySystem
     }
 
     [Serializable, NetSerializable]
-    private sealed class BonkDoAfterEvent : SimpleDoAfterEvent
+    private sealed partial class BonkDoAfterEvent : SimpleDoAfterEvent
     {
     }
 }

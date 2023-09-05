@@ -12,7 +12,7 @@ namespace Content.Server.Nutrition.Components;
 /// This is used for a machine that extracts hunger from entities and creates meat. Yum!
 /// </summary>
 [RegisterComponent, Access(typeof(FatExtractorSystem))]
-public sealed class FatExtractorComponent : Component
+public sealed partial class FatExtractorComponent : Component
 {
     /// <summary>
     /// Whether or not the extractor is currently extracting fat from someone
@@ -37,7 +37,7 @@ public sealed class FatExtractorComponent : Component
     /// Which machine part affects the nutrition rate
     /// </summary>
     [DataField("machinePartNutritionRate", customTypeSerializer: typeof(PrototypeIdSerializer<MachinePartPrototype>))]
-    public string MachinePartNutritionRate = "Laser";
+    public string MachinePartNutritionRate = "Manipulator";
 
     /// <summary>
     /// The increase in rate per each rating above 1.

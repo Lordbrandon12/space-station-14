@@ -57,7 +57,7 @@ namespace Content.Server.Power.EntitySystems
             if (args.Session.AttachedEntity == null)
                 return;
 
-            if (access == null || _accessReader.IsAllowed(args.Session.AttachedEntity.Value, access))
+            if (access == null || _accessReader.IsAllowed(args.Session.AttachedEntity.Value, uid, access))
             {
                 component.HasAccess = true;
             }
@@ -69,11 +69,20 @@ namespace Content.Server.Power.EntitySystems
         }
         private void OnToggleMainBreaker(EntityUid uid, ApcComponent component, ApcToggleMainBreakerMessage args)
         {
+            var attemptEv = new ApcToggleMainBreakerAttemptEvent();
+            RaiseLocalEvent(uid, ref attemptEv);
+            if (attemptEv.Cancelled)
+            {
+                _popup.PopupCursor(Loc.GetString("apc-component-on-toggle-cancel"),
+                    args.Session, PopupType.Medium);
+                return;
+            }
+
             TryComp<AccessReaderComponent>(uid, out var access);
             if (args.Session.AttachedEntity == null)
                 return;
 
-            if (access == null || _accessReader.IsAllowed(args.Session.AttachedEntity.Value, access))
+            if (access == null || _accessReader.IsAllowed(args.Session.AttachedEntity.Value, uid, access))
             {
                 ApcToggleBreaker(uid, component);
             }
@@ -183,8 +192,12 @@ namespace Content.Server.Power.EntitySystems
             if (component.MainBreakerEnabled)
             {
                 args.Affected = true;
+                args.Disabled = true;
                 ApcToggleBreaker(uid, component);
             }
         }
     }
+
+    [ByRefEvent]
+    public record struct ApcToggleMainBreakerAttemptEvent(bool Cancelled);
 }

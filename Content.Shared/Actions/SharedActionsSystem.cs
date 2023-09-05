@@ -5,12 +5,9 @@ using Content.Shared.Database;
 using Content.Shared.Hands;
 using Content.Shared.Interaction;
 using Content.Shared.Inventory.Events;
-using Content.Shared.Popups;
-using Robust.Shared.Audio;
 using Robust.Shared.Containers;
 using Robust.Shared.GameStates;
 using Robust.Shared.Map;
-using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Timing;
 using System.Linq;
@@ -25,8 +22,8 @@ public abstract class SharedActionsSystem : EntitySystem
     [Dependency] private readonly ActionBlockerSystem _actionBlockerSystem = default!;
     [Dependency] private readonly SharedContainerSystem _containerSystem = default!;
     [Dependency] private readonly RotateToFaceSystem _rotateToFaceSystem = default!;
-    [Dependency] private readonly SharedPopupSystem _popupSystem = default!;
     [Dependency] private readonly SharedAudioSystem _audio = default!;
+    [Dependency] private readonly SharedTransformSystem _transformSystem = default!;
 
     public override void Initialize()
     {
@@ -98,7 +95,7 @@ public abstract class SharedActionsSystem : EntitySystem
     /// </summary>
     private void OnActionRequest(RequestPerformActionEvent ev, EntitySessionEventArgs args)
     {
-        if (args.SenderSession.AttachedEntity is not EntityUid user)
+        if (args.SenderSession.AttachedEntity is not { } user)
             return;
 
         if (!TryComp(user, out ActionsComponent? component))
@@ -130,21 +127,26 @@ public abstract class SharedActionsSystem : EntitySystem
 
                 if (ev.EntityTarget is not { Valid: true } entityTarget)
                 {
-                    Logger.Error($"Attempted to perform an entity-targeted action without a target! Action: {entityAction.DisplayName}");
+                    Log.Error($"Attempted to perform an entity-targeted action without a target! Action: {entityAction.DisplayName}");
                     return;
                 }
 
-                _rotateToFaceSystem.TryFaceCoordinates(user, Transform(entityTarget).WorldPosition);
+                var targetWorldPos = _transformSystem.GetWorldPosition(entityTarget);
+                _rotateToFaceSystem.TryFaceCoordinates(user, targetWorldPos);
 
                 if (!ValidateEntityTarget(user, entityTarget, entityAction))
                     return;
 
                 if (act.Provider == null)
+                {
                     _adminLogger.Add(LogType.Action,
-                    $"{ToPrettyString(user):user} is performing the {name:action} action targeted at {ToPrettyString(entityTarget):target}.");
+                        $"{ToPrettyString(user):user} is performing the {name:action} action targeted at {ToPrettyString(entityTarget):target}.");
+                }
                 else
+                {
                     _adminLogger.Add(LogType.Action,
-                    $"{ToPrettyString(user):user} is performing the {name:action} action (provided by {ToPrettyString(act.Provider.Value):provider}) targeted at {ToPrettyString(entityTarget):target}.");
+                        $"{ToPrettyString(user):user} is performing the {name:action} action (provided by {ToPrettyString(act.Provider.Value):provider}) targeted at {ToPrettyString(entityTarget):target}.");
+                }
 
                 if (entityAction.Event != null)
                 {
@@ -156,9 +158,9 @@ public abstract class SharedActionsSystem : EntitySystem
 
             case WorldTargetAction worldAction:
 
-                if (ev.EntityCoordinatesTarget is not EntityCoordinates entityCoordinatesTarget)
+                if (ev.EntityCoordinatesTarget is not { } entityCoordinatesTarget)
                 {
-                    Logger.Error($"Attempted to perform a world-targeted action without a target! Action: {worldAction.DisplayName}");
+                    Log.Error($"Attempted to perform a world-targeted action without a target! Action: {worldAction.DisplayName}");
                     return;
                 }
 
@@ -168,11 +170,15 @@ public abstract class SharedActionsSystem : EntitySystem
                     return;
 
                 if (act.Provider == null)
+                {
                     _adminLogger.Add(LogType.Action,
                         $"{ToPrettyString(user):user} is performing the {name:action} action targeted at {entityCoordinatesTarget:target}.");
+                }
                 else
+                {
                     _adminLogger.Add(LogType.Action,
                         $"{ToPrettyString(user):user} is performing the {name:action} action (provided by {ToPrettyString(act.Provider.Value):provider}) targeted at {entityCoordinatesTarget:target}.");
+                }
 
                 if (worldAction.Event != null)
                 {
@@ -188,11 +194,15 @@ public abstract class SharedActionsSystem : EntitySystem
                     return;
 
                 if (act.Provider == null)
+                {
                     _adminLogger.Add(LogType.Action,
                         $"{ToPrettyString(user):user} is performing the {name:action} action.");
+                }
                 else
+                {
                     _adminLogger.Add(LogType.Action,
                         $"{ToPrettyString(user):user} is performing the {name:action} action provided by {ToPrettyString(act.Provider.Value):provider}.");
+                }
 
                 performEvent = instantAction.Event;
                 break;
@@ -231,7 +241,8 @@ public abstract class SharedActionsSystem : EntitySystem
             if (action.Range <= 0)
                 return true;
 
-            return (xform.WorldPosition - targetXform.WorldPosition).Length <= action.Range;
+            var distance = (_transformSystem.GetWorldPosition(xform) - _transformSystem.GetWorldPosition(targetXform)).Length();
+            return distance <= action.Range;
         }
 
         if (_interactionSystem.InRangeUnobstructed(user, target, range: action.Range)
@@ -259,7 +270,7 @@ public abstract class SharedActionsSystem : EntitySystem
             if (action.Range <= 0)
                 return true;
 
-            return coords.InRange(EntityManager, Transform(user).Coordinates, action.Range);
+            return coords.InRange(EntityManager, _transformSystem, Transform(user).Coordinates, action.Range);
         }
 
         return _interactionSystem.InRangeUnobstructed(user, coords, range: action.Range);
@@ -284,8 +295,8 @@ public abstract class SharedActionsSystem : EntitySystem
             handled = actionEvent.Handled;
         }
 
-        // Execute convenience functionality (pop-ups, sound, speech)
-        handled |= PerformBasicActions(performer, action, predicted);
+        _audio.PlayPredicted(action.Sound, performer,predicted ? performer : null);
+        handled |= action.Sound != null;
 
         if (!handled)
             return; // no interaction occurred.
@@ -312,30 +323,6 @@ public abstract class SharedActionsSystem : EntitySystem
         if (dirty && component != null)
             Dirty(component);
     }
-
-    /// <summary>
-    ///     Execute convenience functionality for actions (pop-ups, sound, speech)
-    /// </summary>
-    protected virtual bool PerformBasicActions(EntityUid performer, ActionType action, bool predicted)
-    {
-        if (action.Sound == null && string.IsNullOrWhiteSpace(action.Popup))
-            return false;
-
-        var filter = predicted ? Filter.PvsExcept(performer) : Filter.Pvs(performer);
-
-        _audio.Play(action.Sound, filter, performer, true);
-
-        if (string.IsNullOrWhiteSpace(action.Popup))
-            return true;
-
-        var msg = (!action.Toggled || string.IsNullOrWhiteSpace(action.PopupToggleSuffix))
-            ? Loc.GetString(action.Popup)
-            : Loc.GetString(action.Popup + action.PopupToggleSuffix);
-
-        _popupSystem.PopupEntity(msg, performer, filter, true);
-
-        return true;
-    }
     #endregion
 
     #region AddRemoveActions
@@ -350,7 +337,7 @@ public abstract class SharedActionsSystem : EntitySystem
         // Because action classes have state data, e.g. cooldowns and uses-remaining, people should not be adding prototypes directly
         if (action is IPrototype)
         {
-            Logger.Error("Attempted to directly add a prototype action. You need to clone a prototype in order to use it.");
+            Log.Error("Attempted to directly add a prototype action. You need to clone a prototype in order to use it.");
             return;
         }
 
@@ -378,7 +365,7 @@ public abstract class SharedActionsSystem : EntitySystem
     {
         comp ??= EnsureComp<ActionsComponent>(uid);
 
-        bool allClientExclusive = true;
+        var allClientExclusive = true;
 
         foreach (var action in actions)
         {
@@ -423,8 +410,8 @@ public abstract class SharedActionsSystem : EntitySystem
     #region EquipHandlers
     private void OnDidEquip(EntityUid uid, ActionsComponent component, DidEquipEvent args)
     {
-        var ev = new GetItemActionsEvent(args.SlotFlags);
-        RaiseLocalEvent(args.Equipment, ev, false);
+        var ev = new GetItemActionsEvent(args.Equipee, args.SlotFlags);
+        RaiseLocalEvent(args.Equipment, ev);
 
         if (ev.Actions.Count == 0)
             return;
@@ -434,8 +421,8 @@ public abstract class SharedActionsSystem : EntitySystem
 
     private void OnHandEquipped(EntityUid uid, ActionsComponent component, DidEquipHandEvent args)
     {
-        var ev = new GetItemActionsEvent();
-        RaiseLocalEvent(args.Equipped, ev, false);
+        var ev = new GetItemActionsEvent(args.User);
+        RaiseLocalEvent(args.Equipped, ev);
 
         if (ev.Actions.Count == 0)
             return;
