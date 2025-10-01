@@ -17,6 +17,12 @@
         Blunt: 8
     soundHit:
       collection: MetalThud
+  - type: WeaponAttributes
+    governingAttributes:
+      melee-skill: 0
+      dexterity: -4
+    multiplyingAttributes:
+      - strength
   - type: Tool
     qualities:
       - Prying
@@ -62,6 +68,12 @@
   id: CrowbarRed
   description: An emergency crowbar designed to pry open doors and firelocks during power outages.
   components:
+  - type: WeaponAttributes
+    governingAttributes:
+      melee-skill: 0
+      dexterity: -4
+    multiplyingAttributes:
+      - strength
   - type: Tag
     tags:
     - Crowbar

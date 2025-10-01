@@ -1,0 +1,23 @@
+- type: attribute
+  id: strength
+  name: strength
+  abreviation: ST
+  baseValue: 10
+
+- type: attribute
+  id: dexterity
+  name: dexterity
+  abreviation: DX
+  baseValue: 10
+
+- type: attribute
+  id: inteligence
+  name: inteliegnce
+  abreviation: IQ
+  baseValue: 10
+
+- type: attribute
+  id: vitality
+  name: vitality
+  abreviation: VT
+  baseValue: 10

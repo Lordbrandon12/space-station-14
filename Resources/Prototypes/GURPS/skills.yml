@@ -1,0 +1,4 @@
+- type: attribute
+  id: melee-skill
+  name: melee-skill
+  BaseValue: 0

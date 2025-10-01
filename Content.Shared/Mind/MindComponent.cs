@@ -28,6 +28,10 @@ public sealed partial class MindComponent : Component
     [DataField, AutoNetworkedField]
     public List<EntityUid> Objectives = new();
 
+    [DataField, AutoNetworkedField]
+    [ViewVariables]
+    public Dictionary<EntProtoId, int> Skills = new();
+
     /// <summary>
     ///     The session ID of the player owning this mind.
     /// </summary>

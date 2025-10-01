@@ -33,6 +33,8 @@
   - !type:AddComponentSpecial
     components:
       - type: CommandStaff
+  skills:
+    melee-skill: 200
 
 - type: startingGear
   id: CaptainGear

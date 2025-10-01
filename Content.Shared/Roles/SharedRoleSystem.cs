@@ -4,6 +4,7 @@ using Content.Shared.Administration.Logs;
 using Content.Shared.CCVar;
 using Content.Shared.Database;
 using Content.Shared.GameTicking;
+using Content.Shared.GURPS.Atributes;
 using Content.Shared.Mind;
 using Content.Shared.Roles.Components;
 using Content.Shared.Whitelist;
@@ -27,6 +28,7 @@ public abstract class SharedRoleSystem : EntitySystem
     [Dependency] private readonly EntityWhitelistSystem _whitelist = default!;
     [Dependency] private readonly SharedMindSystem _minds = default!;
     [Dependency] private readonly IPrototypeManager _prototypes = default!;
+    [Dependency] private readonly SharedAttributeSystem _attributes = default!;
 
     private JobRequirementOverridePrototype? _requirementOverride;
 

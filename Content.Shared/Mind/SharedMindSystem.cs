@@ -232,6 +232,9 @@ public abstract partial class SharedMindSystem : EntitySystem
         mind.CharacterName = name;
         SetUserId(mindId, userId, mind);
 
+        var ev = new MindCreatedEvent(mindId);
+        RaiseLocalEvent(mindId, ref ev);
+
         return (mindId, mind);
     }
 
@@ -732,6 +735,9 @@ public record struct GetCharactedDeadIcEvent(bool? Dead);
 /// <param name="Unrevivable"></param>
 [ByRefEvent]
 public record struct GetCharacterUnrevivableIcEvent(bool? Unrevivable);
+
+[ByRefEvent]
+public record struct MindCreatedEvent(EntityUid uid);
 
 public sealed record MindStringRepresentation(EntityStringRepresentation? OwnedEntity, bool PlayerPresent, NetUserId? Player) : IAdminLogsPlayerValue
 {

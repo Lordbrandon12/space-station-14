@@ -36,6 +36,12 @@
   - type: ContentEye
   - type: CameraRecoil
   - type: MindContainer
+  - type: Stats
+    attributes:
+      strength: 10
+      dexterity: 10
+      inteligence: 10
+      vitality: 10
   - type: RequireProjectileTarget
     active: False
 

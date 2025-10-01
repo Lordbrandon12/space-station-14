@@ -111,6 +111,9 @@ namespace Content.Shared.Roles
         [DataField]
         public ProtoId<StartingGearPrototype>? StartingGear { get; private set; }
 
+        [DataField("skills")]
+        public Dictionary<EntProtoId, int> Skills { get; set; } = new();
+
         /// <summary>
         /// Use this to spawn in as a non-humanoid (borg, test subject, etc.)
         /// Starting gear will be ignored.
