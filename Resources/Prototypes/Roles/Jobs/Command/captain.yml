@@ -34,7 +34,7 @@
     components:
       - type: CommandStaff
   skills:
-    melee-skill: 200
+    melee-skill: 10
 
 - type: startingGear
   id: CaptainGear

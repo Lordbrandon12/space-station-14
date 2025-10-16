@@ -737,7 +737,7 @@ public record struct GetCharactedDeadIcEvent(bool? Dead);
 public record struct GetCharacterUnrevivableIcEvent(bool? Unrevivable);
 
 [ByRefEvent]
-public record struct MindCreatedEvent(EntityUid uid);
+public record struct MindCreatedEvent(EntityUid Uid);
 
 public sealed record MindStringRepresentation(EntityStringRepresentation? OwnedEntity, bool PlayerPresent, NetUserId? Player) : IAdminLogsPlayerValue
 {

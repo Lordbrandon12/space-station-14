@@ -186,7 +186,7 @@ public abstract class SharedMeleeWeaponSystem : EntitySystem
         weapon.Attacking = false;
         DirtyField(weaponUid, weapon, nameof(MeleeWeaponComponent.Attacking));
     }
-
+    //TODO: in the future the LightAttackEvent will carry a TargetOrgan property once I get around to implement the target doll back
     private void OnLightAttack(LightAttackEvent msg, EntitySessionEventArgs args)
     {
         if (args.SenderSession.AttachedEntity is not {} user)
@@ -469,13 +469,16 @@ public abstract class SharedMeleeWeaponSystem : EntitySystem
         var damage = GetDamage(meleeUid, user, component) * GetHeavyDamageModifier(meleeUid, user, component);
         var target = GetEntity(ev.Target);
         var resistanceBypass = GetResistanceBypass(meleeUid, user, component);
+        //TODO: Currently GetDiceRollResult returns a boolean and I should change into an enum for critial failures, success and regular failures and successes
+        var diceRollResult = GetDiceRollResult(user, meleeUid, component);
 
         // For consistency with wide attacks stuff needs damageable.
         if (Deleted(target) ||
             !HasComp<DamageableComponent>(target) ||
             !TryComp(target, out TransformComponent? targetXform) ||
             // Not in LOS.
-            !InRange(user, target.Value, component.Range, session))
+            !InRange(user, target.Value, component.Range, session) ||
+            diceRollResult)
         {
             // Leave IsHit set to true, because the only time it's set to false
             // is when a melee weapon is examined. Misses are inferred from an
@@ -560,7 +563,18 @@ public abstract class SharedMeleeWeaponSystem : EntitySystem
         }
     }
 
-    protected abstract void DoDamageEffect(List<EntityUid> targets, EntityUid? user,  TransformComponent targetXform);
+    private bool GetDiceRollResult(EntityUid user, EntityUid meleeUid, MeleeWeaponComponent? component = null)
+    {
+        if (!Resolve(meleeUid, ref component))
+            return false;
+
+        var ev = new GetMeleeDiceRollEvent(user);
+        RaiseLocalEvent(meleeUid, ref ev);
+
+        return ev.Missed;
+    }
+
+    protected abstract void DoDamageEffect(List<EntityUid> targets, EntityUid? user, TransformComponent targetXform);
 
     private bool DoHeavyAttack(EntityUid user, HeavyAttackEvent ev, EntityUid meleeUid, MeleeWeaponComponent component, ICommonSession? session)
     {
@@ -959,7 +973,6 @@ public abstract class SharedMeleeWeaponSystem : EntitySystem
     }
 
     public abstract void DoLunge(EntityUid user, EntityUid weapon, Angle angle, Vector2 localPos, string? animation, bool predicted = true);
-
     /// <summary>
     /// Used to update the MeleeWeapon component on item toggle.
     /// </summary>
