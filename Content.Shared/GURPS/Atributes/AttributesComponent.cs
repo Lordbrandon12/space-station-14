@@ -4,7 +4,7 @@ using Robust.Shared.GameStates;
 namespace Content.Shared.GURPS.Atributes
 {
     [RegisterComponent, NetworkedComponent]
-    public sealed partial class WeaponAttributesComponent : Component
+    public sealed partial class AttributesComponent : Component
     {
         [DataField("governingAttributes")]
         public Dictionary<EntProtoId, int> GoverningAttributes { get; set; }

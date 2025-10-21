@@ -489,12 +489,14 @@ public abstract class SharedMeleeWeaponSystem : EntitySystem
                 AdminLogger.Add(LogType.MeleeHit,
                     LogImpact.Low,
                     $"{ToPrettyString(user):actor} melee attacked (light) using their hands and missed");
+                PopupSystem.PopupEntity($"missed while trying to attacked with their hands", meleeUid, user);
             }
             else
             {
                 AdminLogger.Add(LogType.MeleeHit,
                     LogImpact.Low,
                     $"{ToPrettyString(user):actor} melee attacked (light) using {ToPrettyString(meleeUid):tool} and missed");
+                PopupSystem.PopupEntity($"missed while trying to attacked with {ToPrettyString(meleeUid):tool}", meleeUid, user);
             }
             var missEvent = new MeleeHitEvent(new List<EntityUid>(), user, meleeUid, damage, null);
             RaiseLocalEvent(meleeUid, missEvent);
