@@ -10,6 +10,7 @@ using Content.Shared.Damage;
 using Content.Shared.Damage.Systems;
 using Content.Shared.Database;
 using Content.Shared.FixedPoint;
+using Content.Shared.GURPS.Atributes;
 using Content.Shared.Hands;
 using Content.Shared.Hands.Components;
 using Content.Shared.Hands.EntitySystems;
@@ -469,7 +470,6 @@ public abstract class SharedMeleeWeaponSystem : EntitySystem
         var damage = GetDamage(meleeUid, user, component) * GetHeavyDamageModifier(meleeUid, user, component);
         var target = GetEntity(ev.Target);
         var resistanceBypass = GetResistanceBypass(meleeUid, user, component);
-        //TODO: Currently GetDiceRollResult returns a boolean and I should change into an enum for critial failures, success and regular failures and successes
         var diceRollResult = GetDiceRollResult(user, meleeUid, component);
 
         // For consistency with wide attacks stuff needs damageable.
@@ -478,7 +478,8 @@ public abstract class SharedMeleeWeaponSystem : EntitySystem
             !TryComp(target, out TransformComponent? targetXform) ||
             // Not in LOS.
             !InRange(user, target.Value, component.Range, session) ||
-            diceRollResult)
+            diceRollResult == DiceResult.Failure ||
+            diceRollResult == DiceResult.CriticalFailure)
         {
             // Leave IsHit set to true, because the only time it's set to false
             // is when a melee weapon is examined. Misses are inferred from an
@@ -531,10 +532,11 @@ public abstract class SharedMeleeWeaponSystem : EntitySystem
         var attackedEvent = new AttackedEvent(meleeUid, user, targetXform.Coordinates);
         RaiseLocalEvent(target.Value, attackedEvent);
 
+        var damageMultiplier = diceRollResult == DiceResult.CriticalSucess ? 2 : 1;
         var modifiedDamage = DamageSpecifier.ApplyModifierSets(damage + hitEvent.BonusDamage + attackedEvent.BonusDamage, hitEvent.ModifiersList);
         var damageResult = Damageable.TryChangeDamage(target, modifiedDamage, origin:user, ignoreResistances:resistanceBypass);
 
-        if (damageResult is {Empty: false})
+        if (damageResult is { Empty: false })
         {
             // If the target has stamina and is taking blunt damage, they should also take stamina damage based on their blunt to stamina factor
             if (damageResult.DamageDict.TryGetValue("Blunt", out var bluntDamage))
@@ -565,15 +567,15 @@ public abstract class SharedMeleeWeaponSystem : EntitySystem
         }
     }
 
-    private bool GetDiceRollResult(EntityUid user, EntityUid meleeUid, MeleeWeaponComponent? component = null)
+    private DiceResult GetDiceRollResult(EntityUid user, EntityUid meleeUid, MeleeWeaponComponent? component = null)
     {
         if (!Resolve(meleeUid, ref component))
-            return false;
+            return DiceResult.Sucess;
 
-        var ev = new GetMeleeDiceRollEvent(user);
+        var ev = new GetDiceRollEvent(user);
         RaiseLocalEvent(meleeUid, ref ev);
 
-        return ev.Missed;
+        return ev.Result;
     }
 
     protected abstract void DoDamageEffect(List<EntityUid> targets, EntityUid? user, TransformComponent targetXform);

@@ -93,7 +93,3 @@ public record struct GetMeleeAttackRateEvent(EntityUid Weapon, float Rate, float
 /// </summary>
 [ByRefEvent]
 public record struct GetHeavyDamageModifierEvent(EntityUid Weapon, FixedPoint2 DamageModifier, float Multipliers, EntityUid User);
-
-//TODO: I have to change this to use a enum representing the different outcomes of the diceroll
-[ByRefEvent]
-public record struct GetMeleeDiceRollEvent(EntityUid User, bool Missed = false);

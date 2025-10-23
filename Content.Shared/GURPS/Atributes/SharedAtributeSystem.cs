@@ -22,6 +22,13 @@ namespace Content.Shared.GURPS.Atributes
         private const int MinDiceRoll = 3;
         private const int MaxDiceRoll = 18;
 
+        private const int MasteryThreshold = 16;
+        private const int CriticalFailureDifference = 10;
+
+        private readonly int[] _criticalSucessRange = [3, 4];
+        private readonly int[] _criticalSucessMasteryRange = [3, 4, 6, 7];
+        private readonly int[] _cricitalFailureRange = [17, 18];
+        private readonly int[] _crictialFailureMasteryRange = [18];
 
         public override void Initialize()
         {
@@ -30,7 +37,7 @@ namespace Content.Shared.GURPS.Atributes
             SubscribeLocalEvent<AttributesComponent, GetMeleeDamageEvent>(OnGetDiceRoll);
             SubscribeLocalEvent<MindComponent, RoleAddedEvent>(OnRoleAdded);
             SubscribeLocalEvent<MindComponent, MindCreatedEvent>(OnMindCreated);
-            SubscribeLocalEvent<AttributesComponent, GetDiceRollEvent>(OnGetMeleeDiceRoll);
+            SubscribeLocalEvent<AttributesComponent, GetDiceRollEvent>(OnGetDiceRoll);
         }
 
         private void OnGetDiceRoll(Entity<AttributesComponent> ent, ref GetMeleeDamageEvent args)
@@ -81,10 +88,11 @@ namespace Content.Shared.GURPS.Atributes
             return true;
         }
 
-        private void OnGetMeleeDiceRoll(Entity<AttributesComponent> ent, ref GetDiceRollEvent args)
+        private void OnGetDiceRoll(Entity<AttributesComponent> ent, ref GetDiceRollEvent args)
         {
+            //TODO: in the future it'll take into account status effects, like if the player is low on stamina or
+            // high on crack
             IEnumerable<KeyValuePair<EntProtoId, int>>? attributes;
-            args.Missed = false;
 
             if (!_entityMan.TryGetNetEntity(ent, out var netEnt))
                 return;
@@ -103,9 +111,38 @@ namespace Content.Shared.GURPS.Atributes
 
             // TODO: Replace with RandomPredicted once the engine PR is merged
             var seed = SharedRandomExtensions.HashCodeCombine(new() { (int)_timing.CurTick.Value, GetNetEntity(ent).Id });
-            int result = Roll3D6(seed); // this is based on GURPS so it'll away roll a 3D6
+            int result = Roll3D6(seed); // this is based on GURPS so it'll always roll a 3D6
             int governingStat = attributes.Max(x => x.Value);
-            args.Missed = result > governingStat; //TODO:probably rename this to result when I get around to add the DiceRollResultEnum
+            args.SkillLevel = governingStat;
+            //I do understand that it's a bit more complicated than this, for example: if governingStat >= 15, it will include
+            // 5 to the critSucessRange and if governingStat >= 16 it will also include 6 but I simply don't care
+            int[] critFailureRange = _cricitalFailureRange;
+            int[] critSucessRange = _criticalSucessRange;
+
+            if (governingStat > MasteryThreshold)
+            {
+                critFailureRange = _crictialFailureMasteryRange;
+                critSucessRange = _criticalSucessMasteryRange;
+            }
+
+            if (critFailureRange.Contains(result)
+               || result >= governingStat + CriticalFailureDifference)
+            {
+                args.Result = DiceResult.CriticalFailure;
+                return;
+            }
+
+            if (critSucessRange.Contains(result))
+            {
+                args.Result = DiceResult.CriticalSucess;
+                return;
+            }
+
+            if (result < governingStat)
+            {
+                args.Result = DiceResult.Sucess;
+                return;
+            }
         }
 
         private int Roll3D6(int seed)
@@ -168,7 +205,7 @@ namespace Content.Shared.GURPS.Atributes
         }
     }
 
-    //TODO: I have to change this to use a enum representing the different outcomes of the diceroll
+
     [ByRefEvent]
-    public record struct GetDiceRollEvent(EntityUid User, bool Missed = false);
+    public record struct GetDiceRollEvent(EntityUid User, DiceResult Result = DiceResult.Failure, int SkillLevel = 0);
 }
