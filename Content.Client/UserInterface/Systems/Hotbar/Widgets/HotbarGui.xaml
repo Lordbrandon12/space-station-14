@@ -3,6 +3,7 @@
     xmlns:inventory="clr-namespace:Content.Client.UserInterface.Systems.Inventory.Controls"
     xmlns:hands="clr-namespace:Content.Client.UserInterface.Systems.Hands.Controls"
     xmlns:widgets="clr-namespace:Content.Client.UserInterface.Systems.Hotbar.Widgets"
+    xmlns:targeting="clr-namespace:Content.Client.UserInterface.Systems.Targeting"
     Name="HotbarInterface"
     VerticalExpand="True"
     VerticalAlignment="Bottom"
@@ -71,6 +72,7 @@
                 ExpandBackwards="True"
                 Columns="6"
                 />
+            <targeting:TargetingDoll/>
         </BoxContainer>
     </BoxContainer>
 </widgets:HotbarGui>
