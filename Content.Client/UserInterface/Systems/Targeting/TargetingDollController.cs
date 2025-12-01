@@ -15,6 +15,7 @@ using Robust.Shared.Map;
 using Robust.Shared.Timing;
 using static Content.Client.Tips.TippyUI;
 using Content.Client.Tips;
+using Content.Client.UserInterface.Systems.Gameplay;
 
 namespace Content.Client.UserInterface.Systems.Targeting;
 
@@ -31,4 +32,10 @@ public sealed class TargetingDollUIController : UIController
     {
         base.Initialize();
     }
+
+    public void Setup()
+    {
+
+    }
+
 }

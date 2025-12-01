@@ -110,7 +110,7 @@ namespace Content.Shared.GURPS.Atributes
                 return;
 
             // TODO: Replace with RandomPredicted once the engine PR is merged
-            var seed = SharedRandomExtensions.HashCodeCombine(new() { (int)_timing.CurTick.Value, GetNetEntity(ent).Id });
+            var seed = SharedRandomExtensions.HashCodeCombine([ (int)_timing.CurTick.Value, GetNetEntity(ent).Id ]);
             int result = Roll3D6(seed); // this is based on GURPS so it'll always roll a 3D6
             int governingStat = attributes.Max(x => x.Value);
             args.SkillLevel = governingStat;

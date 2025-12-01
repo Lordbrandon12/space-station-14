@@ -10,45 +10,11 @@ namespace Content.Client.UserInterface.Systems.Targeting;
 [GenerateTypedNameReferences]
 public sealed partial class TargetingDoll : UIWidget
 {
-    public TippyState State = TippyState.Hidden;
     public bool ModifyLayers = true;
 
     public TargetingDoll()
     {
         RobustXamlLoader.Load(this);
-    }
-
-    public void InitLabel(PaperVisualsComponent? visuals, IResourceCache resCache)
-    {
-        if (visuals == null)
-            return;
-
-        Label.ModulateSelfOverride = visuals.FontAccentColor;
-
-        if (visuals.BackgroundImagePath == null)
-            return;
-
-        LabelPanel.ModulateSelfOverride = visuals.BackgroundModulate;
-        var backgroundImage = resCache.GetResource<TextureResource>(visuals.BackgroundImagePath);
-        var backgroundImageMode = visuals.BackgroundImageTile ? StyleBoxTexture.StretchMode.Tile : StyleBoxTexture.StretchMode.Stretch;
-        var backgroundPatchMargin = visuals.BackgroundPatchMargin;
-        LabelPanel.PanelOverride = new StyleBoxTexture
-        {
-            Texture = backgroundImage,
-            TextureScale = visuals.BackgroundScale,
-            Mode = backgroundImageMode,
-            PatchMarginLeft = backgroundPatchMargin.Left,
-            PatchMarginBottom = backgroundPatchMargin.Bottom,
-            PatchMarginRight = backgroundPatchMargin.Right,
-            PatchMarginTop = backgroundPatchMargin.Top
-        };
-    }
-
-    public enum TippyState : byte
-    {
-        Hidden,
-        Revealing,
-        Speaking,
-        Hiding,
+        BackGround.Texture = Theme.ResolveTextureOrNull("targeting_doll.png")?.Texture;
     }
 }
