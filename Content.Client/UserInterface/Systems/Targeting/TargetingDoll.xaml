@@ -2,6 +2,8 @@
                xmlns:targeting="clr-namespace:Content.Client.UserInterface.Systems.Targeting"
                MinSize="64 64"
                Visible="False">
-    <TextureRect Name="BackGround">
+    <TextureRect Name="BackGround"
+                 Stretch="KeepAspectCentered"
+                 SetSize="96 96">
     </TextureRect>
 </targeting:TargetingDoll>

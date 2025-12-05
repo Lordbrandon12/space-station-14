@@ -15,6 +15,6 @@ public sealed partial class TargetingDoll : UIWidget
     public TargetingDoll()
     {
         RobustXamlLoader.Load(this);
-        BackGround.Texture = Theme.ResolveTextureOrNull("targeting_doll.png")?.Texture;
+        BackGround.Texture = Theme.ResolveTextureOrNull("targeting_doll")?.Texture;
     }
 }
