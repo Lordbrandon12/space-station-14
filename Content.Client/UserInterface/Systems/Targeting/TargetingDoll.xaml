@@ -1,9 +1,7 @@
 <targeting:TargetingDoll xmlns="https://spacestation14.io"
                xmlns:targeting="clr-namespace:Content.Client.UserInterface.Systems.Targeting"
-               MinSize="64 64"
-               Visible="False">
+               MinSize="64 64">
     <TextureRect Name="BackGround"
-                 Stretch="KeepAspectCentered"
-                 SetSize="96 96">
+                 Stretch="KeepAspectCentered">
     </TextureRect>
 </targeting:TargetingDoll>

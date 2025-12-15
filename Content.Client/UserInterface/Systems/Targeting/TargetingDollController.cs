@@ -31,6 +31,20 @@ public sealed class TargetingDollUIController : UIController
     public override void Initialize()
     {
         base.Initialize();
+
+        var gameplayStateLoad = UIManager.GetUIController<GameplayStateLoadController>();
+        gameplayStateLoad.OnScreenLoad += OnScreemLoad;
+    }
+
+    private void OnScreemLoad()
+    {
+        if (UIManager.ActiveScreen == null)
+            return;
+
+        if (UIManager.ActiveScreen.GetWidget<TargetingDoll>() is { } targetDoll)
+        {
+            targetDoll.Setup();
+        }
     }
 
     public void Setup()

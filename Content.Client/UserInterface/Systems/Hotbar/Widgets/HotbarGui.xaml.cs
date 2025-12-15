@@ -21,23 +21,23 @@ public sealed partial class HotbarGui : UIWidget
 
     public void UpdatePanelEntityLeft(EntityUid? entity, Hand? hand)
     {
-        //StatusPanelLeft.Update(entity, hand);
+        StatusPanelLeft.Update(entity, hand);
     }
 
     public void UpdatePanelEntityRight(EntityUid? entity, Hand? hand)
     {
-        //StatusPanelRight.Update(entity, hand);
+        StatusPanelRight.Update(entity, hand);
     }
 
     public void SetHighlightHand(HandUILocation? hand)
     {
-        //StatusPanelLeft.UpdateHighlight(hand is HandUILocation.Left);
-        //StatusPanelRight.UpdateHighlight(hand is HandUILocation.Right);
+        StatusPanelLeft.UpdateHighlight(hand is HandUILocation.Left);
+        StatusPanelRight.UpdateHighlight(hand is HandUILocation.Right);
     }
 
     public void UpdateStatusVisibility(bool left, bool right)
     {
-        //StatusPanelLeft.Visible = left;
-        //StatusPanelRight.Visible = right;
+        StatusPanelLeft.Visible = left;
+        StatusPanelRight.Visible = right;
     }
 }
