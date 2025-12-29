@@ -23,5 +23,6 @@ public sealed partial class TargetingDoll : UIWidget
         BackGround.Texture = Theme.ResolveTextureOrNull("targeting_doll")?.Texture;
         BackGround.MinSize = new Vector2(192, 64);
         BackGround.TextureScale = new Vector2(2,2);
+
     }
 }
