@@ -1,0 +1,179 @@
+<targeting:TargetingDoll xmlns="https://spacestation14.io"
+               xmlns:targeting="clr-namespace:Content.Client.UserInterface.Systems.GURPS.Targeting"
+               MinSize="96 32">
+    <TextureRect Name="BackGround"
+                 TextureScale="2 2"
+                 HorizontalAlignment="Left"
+                 VerticalAlignment="Top"
+                 TexturePath="/Textures/Interface/Default/targeting_doll.png">
+        <PanelContainer VerticalAlignment="Top"
+                        HorizontalAlignment="Left">
+                <TextureButton Name="LeftEyeSelection"
+                               MouseFilter="Stop"
+                               Margin="20 32 0 0"
+                               MinSize="5 5"
+                               HorizontalAlignment="Left"
+                               VerticalAlignment="Top">
+                    <TextureRect TextureScale="2 2"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Center"
+                                 TexturePath="/Textures/Interface/Default/eye.png"/>
+                </TextureButton>
+                <TextureButton Name="RightEyeSelection"
+                               MouseFilter="Stop"
+                               Margin="35 32 0 0"
+                               MinSize="5 5"
+                               HorizontalAlignment="Left"
+                               VerticalAlignment="Top">
+                    <TextureRect TextureScale="2 2"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Center"
+                                 TexturePath="/Textures/Interface/Default/eye.png"/>
+                </TextureButton>
+            <TextureButton Name="MouthSelection"
+                           MouseFilter="Stop"
+                           Margin="25 52 0 0"
+                           MinSize="16 8"
+                           HorizontalAlignment="Left"
+                           VerticalAlignment="Top">
+                <TextureRect TextureScale="2 2"
+                             HorizontalAlignment="Center"
+                             VerticalAlignment="Center"
+                             TexturePath="/Textures/interface/Default/mouth.png"/>
+            </TextureButton>
+            <TextureButton Name="HeadSelection"
+                           MouseFilter="Stop"
+                           Margin="26 70 0 0"
+                           MinSize="14 18"
+                           HorizontalAlignment="Left"
+                           VerticalAlignment="Top">
+                <TextureRect TextureScale="2 2"
+                             HorizontalAlignment="Center"
+                             VerticalAlignment="Center"
+                             TexturePath="/Textures/Interface/Default/head.png"/>
+            </TextureButton>
+            <TextureButton Name="NeckSelection"
+                           MouseFilter="Stop"
+                           Margin="26 86 0 0"
+                           MinSize="14 9"
+                           HorizontalAlignment="Left"
+                           VerticalAlignment="Top">
+                <TextureRect TextureScale="2 2"
+                             HorizontalAlignment="Center"
+                             VerticalAlignment="Center"
+                             TexturePath="/Textures/Interface/Default/neck.png"/>
+            </TextureButton>
+            <TextureButton Name="RightArmSelection"
+                           MouseFilter="Stop"
+                           Margin="12 92 0 0"
+                           MinSize="14 40"
+                           HorizontalAlignment="Left"
+                           VerticalAlignment="Top">
+                <TextureRect TextureScale="2 2"
+                             HorizontalAlignment="Center"
+                             VerticalAlignment="Center"
+                             TexturePath="/Textures/Interface/Default/right-arm.png"/>
+            </TextureButton>
+            <TextureButton Name="TorsoSelection"
+                           MouseFilter="Stop"
+                           Margin="22 92 0 0"
+                           MinSize="22 32"
+                           HorizontalAlignment="Left"
+                           VerticalAlignment="Top">
+                    <TextureRect TextureScale="2 2"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Center"
+                                 Visible="False"
+                                 TexturePath="/Textures/Interface/Default/torso.png"/>
+            </TextureButton>
+            <TextureButton Name="LeftArmSelection"
+                           MouseFilter="Stop"
+                           Margin="40 92 0 0"
+                           SetSize="14 40"
+                           HorizontalAlignment="Left"
+                           VerticalAlignment="Top">
+                    <TextureRect TextureScale="2 2"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Center"
+                                 TexturePath="/Textures/Interface/Default/left-arm.png"/>
+            </TextureButton>
+            <TextureButton Name="RightHandSelection"
+                           MouseFilter="Stop"
+                           Margin="6 126 0 0"
+                           SetSize="13 13"
+                           HorizontalAlignment="Left"
+                           VerticalAlignment="Top">
+                    <TextureRect TextureScale="2 2"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Center"
+                                 TexturePath="/Textures/Interface/Default/right-hand.png"/>
+            </TextureButton>
+            <TextureButton Name="GroinSelection"
+                           MouseFilter="Stop"
+                           Margin="22 118 0 0"
+                           SetSize="22 18"
+                           HorizontalAlignment="Left"
+                           VerticalAlignment="Top">
+                    <TextureRect TextureScale="2 2"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Center"
+                                 TexturePath="/Textures/Interface/Default/groin.png"/>
+            </TextureButton>
+            <TextureButton Name="LeftHandSelection"
+                           MouseFilter="Stop"
+                           Margin="46 126 0 0"
+                           SetSize="13 13"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Top">
+                    <TextureRect TextureScale="2 2"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Center"
+                                 TexturePath="/Textures/Interface/Default/left-hand.png"/>
+            </TextureButton>
+            <TextureButton Name="RightLegSelection"
+                           MouseFilter="Stop"
+                           Margin="18 132 0 0"
+                           SetSize="16 50"
+                           HorizontalAlignment="Left"
+                           VerticalAlignment="Top">
+                    <TextureRect TextureScale="2 2"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Center"
+                                 TexturePath="/Textures/Interface/Default/right-leg.png"/>
+            </TextureButton>
+            <TextureButton Name="LeftLegSelection"
+                           MouseFilter="Stop"
+                           Margin="32 132 0 0"
+                           SetSize="16 50"
+                           HorizontalAlignment="Left"
+                           VerticalAlignment="Top">
+                    <TextureRect TextureScale="2 2"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Center"
+                                 TexturePath="/Textures/Interface/Default/left-leg.png"/>
+            </TextureButton>
+            <TextureButton Name="RightFootSelection"
+                           MouseFilter="Stop"
+                           Margin="18 179 0 0"
+                           SetSize="16 8"
+                           HorizontalAlignment="Left"
+                           VerticalAlignment="Top">
+                    <TextureRect TextureScale="2 2"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Center"
+                                 TexturePath="/Textures/Interface/Default/right-foot.png"/>
+            </TextureButton>
+            <TextureButton Name="LeftFootSelection"
+                           MouseFilter="Stop"
+                           Margin="32 179 0 0"
+                           SetSize="16 8"
+                           HorizontalAlignment="Left"
+                           VerticalAlignment="Top">
+                    <TextureRect TextureScale="2 2"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Center"
+                                 TexturePath="/Textures/Interface/Default/left-foot.png"/>
+            </TextureButton>
+        </PanelContainer>
+    </TextureRect>
+</targeting:TargetingDoll>

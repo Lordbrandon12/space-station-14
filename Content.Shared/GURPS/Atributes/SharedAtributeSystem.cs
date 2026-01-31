@@ -19,8 +19,11 @@ namespace Content.Shared.GURPS.Atributes
 
         private const string SkillKeyword = "skill";
 
-        private const int MinDiceRoll = 3;
-        private const int MaxDiceRoll = 18;
+        private const int MinDiceRoll = 1;
+        private const int MaxDiceRoll = 6;
+
+        private const int MaxPossibleRoll = 18;
+        private const int MinnPossibleRoll = 3;
 
         private const int MasteryThreshold = 16;
         private const int CriticalFailureDifference = 10;
@@ -28,7 +31,9 @@ namespace Content.Shared.GURPS.Atributes
         private readonly int[] _criticalSucessRange = [3, 4];
         private readonly int[] _criticalSucessMasteryRange = [3, 4, 6, 7];
         private readonly int[] _cricitalFailureRange = [17, 18];
-        private readonly int[] _crictialFailureMasteryRange = [18];
+        private readonly int[] _criticalFailureMasteryRange = [18];
+
+        private readonly Dictionary<string, int> _attributeBaseValues = new();
 
         public override void Initialize()
         {
@@ -38,6 +43,11 @@ namespace Content.Shared.GURPS.Atributes
             SubscribeLocalEvent<MindComponent, RoleAddedEvent>(OnRoleAdded);
             SubscribeLocalEvent<MindComponent, MindCreatedEvent>(OnMindCreated);
             SubscribeLocalEvent<AttributesComponent, GetDiceRollEvent>(OnGetDiceRoll);
+
+            foreach(var prototype in _prototypes.EnumeratePrototypes<AttributePrototype>())
+            {
+                _attributeBaseValues[prototype.ID] = prototype.BaseValue;
+            }
         }
 
         private void OnGetDiceRoll(Entity<AttributesComponent> ent, ref GetMeleeDamageEvent args)
@@ -52,29 +62,28 @@ namespace Content.Shared.GURPS.Atributes
                 return;
 
             foreach (var keyValue in stats)
-                args.Damage *= keyValue.Value / GetStatBaseValue(keyValue.Key);
+                args.Damage *= keyValue.Value / _attributeBaseValues[keyValue.Key];
         }
 
         private bool TryGetAtributeMultipliers(AttributesComponent weaponAttributesComp,
                                               StatsComponent statsComp,
-                                              out IEnumerable<KeyValuePair<EntProtoId, int>> stats)
+                                              out List<KeyValuePair<EntProtoId, int>> result)
         {
-            var weaponMultipliers = weaponAttributesComp.MultiplyingAttributes;
-            var multiplierIds = new HashSet<string>(weaponMultipliers.Select(x => x.Id));
-            stats = statsComp.Attributes.Where(stat => multiplierIds.Contains(stat.Key.Id));
+            result = new();
 
-            if (!stats.Any())
-                return false;
+            foreach (var stat in statsComp.Attributes)
+            {
+                foreach (var attribute in weaponAttributesComp.MultiplyingAttributes)
+                {
+                    if (stat.Key == attribute.Id)
+                    {
+                        result.Add(stat);
+                        break;
+                    }
+                }
+            }
 
-            return true;
-        }
-
-
-        private int GetStatBaseValue(EntProtoId key)
-        {
-            var prototype = _prototypes.EnumeratePrototypes<AttributePrototype>().Where(x => x.ID == key.Id);
-
-            return prototype.FirstOrDefault()?.BaseValue ?? 1;
+            return result.Count > 0;
         }
 
         public bool TryGetEntityStats(EntityUid entUid, out Dictionary<EntProtoId, int> stats)
@@ -114,41 +123,35 @@ namespace Content.Shared.GURPS.Atributes
             int result = Roll3D6(seed); // this is based on GURPS so it'll always roll a 3D6
             int governingStat = attributes.Max(x => x.Value);
             args.SkillLevel = governingStat;
-            //I do understand that it's a bit more complicated than this, for example: if governingStat >= 15, it will include
-            // 5 to the critSucessRange and if governingStat >= 16 it will also include 6 but I simply don't care
-            int[] critFailureRange = _cricitalFailureRange;
-            int[] critSucessRange = _criticalSucessRange;
+            args.Result = ResolveDiceResult(result, governingStat);
+        }
 
-            if (governingStat > MasteryThreshold)
-            {
-                critFailureRange = _crictialFailureMasteryRange;
-                critSucessRange = _criticalSucessMasteryRange;
-            }
+        private DiceResult ResolveDiceResult(int roll, int skill)
+        {
+            bool mastery = skill >= MasteryThreshold;
 
-            if (critFailureRange.Contains(result)
-               || result >= governingStat + CriticalFailureDifference)
-            {
-                args.Result = DiceResult.CriticalFailure;
-                return;
-            }
+            var critFailure = mastery ? _criticalFailureMasteryRange :
+                                        _criticalSucessRange;
 
-            if (critSucessRange.Contains(result))
-            {
-                args.Result = DiceResult.CriticalSucess;
-                return;
-            }
+            var critSucess = mastery ? _criticalSucessMasteryRange :
+                                       _criticalSucessRange;
 
-            if (result < governingStat)
-            {
-                args.Result = DiceResult.Sucess;
-                return;
-            }
+            if (critFailure.Contains(roll) || roll >= skill + CriticalFailureDifference)
+                return DiceResult.CriticalFailure;
+
+            if (critSucess.Contains(roll))
+                return DiceResult.CriticalSucess;
+
+            if (roll <= skill)
+                return DiceResult.Sucess;
+
+            return DiceResult.Failure;
         }
 
         private int Roll3D6(int seed)
         {
             var rand = new System.Random(seed);
-            return rand.Next(MinDiceRoll, MaxDiceRoll);
+            return rand.Next(MinDiceRoll, MaxDiceRoll) + rand.Next(MinDiceRoll, MaxDiceRoll) + rand.Next(MinDiceRoll, MaxDiceRoll);
         }
 
         private void OnMindCreated(Entity<MindComponent> ent, ref MindCreatedEvent args)
@@ -185,7 +188,7 @@ namespace Content.Shared.GURPS.Atributes
                 if (stats.TryGetValue(key, out var value))
                 {
                     var attribute = value + bonus;
-                    governing.Add(new KeyValuePair<EntProtoId, int>(key, Math.Clamp(attribute, MinDiceRoll, MaxDiceRoll)));
+                    governing.Add(new KeyValuePair<EntProtoId, int>(key, Math.Clamp(attribute, MinnPossibleRoll, MaxPossibleRoll)));
                 }
             }
 
