@@ -11,7 +11,7 @@ namespace Content.Client.GURPS.Targeting
 
         public void UIBodyPartChanged(TargetBodyPart bodyPart)
         {
-            RaisePredictiveEvent(new RequestSetTargetedBodyPartEvent(bodyPart));
+            RaisePredictiveEvent(new RequestSetTargetBodyPartEvent(bodyPart));
         }
     }
 }

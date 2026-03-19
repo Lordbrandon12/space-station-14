@@ -45,6 +45,15 @@ public sealed class TargetingDollUIController : UIController
         _initialized = true;
     }
 
+    private void OnScreenUnload()
+    {
+        if (_targetingDoll == null)
+            return;
+
+        foreach (var button in _targetingDoll.BodyParts.Values)
+            button.OnPressed -= OnTextureButtonPressed;
+    }
+
     private void OnTextureButtonPressed(BaseButton.ButtonEventArgs args)
     {
         if (_targetingDoll == null)
@@ -52,7 +61,10 @@ public sealed class TargetingDollUIController : UIController
 
         _targetingDoll.SetActive(args.Button);
 
-        SelectedBodyPart = _targetingDoll.BodyParts.FirstOrDefault(x => x.Value == args.Button).Key;
+        foreach (var pair in _targetingDoll.BodyParts)
+            if (pair.Value == args.Button)
+                SelectedBodyPart = pair.Key;
+
         _targetingSystem.UIBodyPartChanged(SelectedBodyPart);
     }
 }
